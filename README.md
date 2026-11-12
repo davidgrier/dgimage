@@ -1,7 +1,7 @@
 # dgimage: image transformations for holography and microscopy
 
-[![PyPI version](https://img.shields.io/pypi/v/dgimage)](https://pypi.org/project/dgimage/)
-[![Python](https://img.shields.io/pypi/pyversions/dgimage)](https://pypi.org/project/dgimage/)
+[![PyPI version](https://img.shields.io/pypi/v/dgimage?style=flat)](https://pypi.org/project/dgimage/)
+[![Python](https://img.shields.io/pypi/pyversions/dgimage?style=flat)](https://pypi.org/project/dgimage/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Tests](https://github.com/davidgrier/dgimage/actions/workflows/test.yml/badge.svg)](https://github.com/davidgrier/dgimage/actions/workflows/test.yml)
 [![Documentation](https://app.readthedocs.org/projects/dgimage/badge/?version=latest)](https://dgimage.readthedocs.io/en/latest/)
