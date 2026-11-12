@@ -64,14 +64,30 @@ module::
     median = azimuthal.med(image, center=(x, y))
     median, deviation = azimuthal.mad(image, center=(x, y))
 
-The profile of the hologram of one sphere, about the center that the circle
-transform found, shows the fringes as a function of radius.  The median
-follows the average closely here, but ignores a speck of dust that the
-average would feel:
+The circle transform finds a sphere to within a few pixels, which is enough to
+start but not to measure: a profile about a center that is off by a few pixels
+smears the fringes.  The center that makes the hologram most nearly symmetric
+is the one that minimizes the azimuthal standard deviation, so a short
+refinement with :func:`~dgimage.azimuthal.std` sharpens the profile::
+
+    from scipy import optimize
+
+    def spread(center):
+        _, deviation = azimuthal.std(image, tuple(center))
+        return np.nansum(deviation[2:150])
+
+    x, y = optimize.minimize(spread, coarse, method='Nelder-Mead').x
+    median = azimuthal.med(image, (x, y))
+
+In the figure the transform puts the center at (190, 191); the refinement
+moves it to (193.8, 194.6), which agrees with a full fit of the hologram to
+Lorenz-Mie theory to 0.1 pixel.  The profile about the refined center has
+deeper minima and fringes that stay sharp to large radius, and the median
+ignores a speck of dust that an average would feel:
 
 .. image:: _static/azimuthal.png
-   :alt: A hologram of one sphere and its azimuthal median and average as
-         functions of the distance from the center of the sphere.
+   :alt: A hologram of one sphere and its azimuthal median about the center
+         found by the circle transform and about the refined center.
 
 ``center`` is ``(x, y)`` in pixels.  Without it the center is
 ``(nx / 2, ny / 2)``, which is half a pixel beyond the middle pixel of an

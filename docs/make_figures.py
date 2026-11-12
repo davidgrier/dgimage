@@ -15,7 +15,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from pylorenzmie.utilities import example_hologram
-from scipy import ndimage
+from scipy import ndimage, optimize
 
 from dgimage import azimuthal, circletransform
 
@@ -29,6 +29,17 @@ def peaks(heat: np.ndarray, count: int, size: int = 41):
     ys, xs = np.nonzero(local & (heat > 0.05))
     order = np.argsort(heat[ys, xs])[::-1][:count]
     return xs[order], ys[order]
+
+
+def refine(image: np.ndarray, guess, radius: int = 150):
+    '''Move *guess* (x, y) to where *image* is most nearly symmetric: the
+    center that minimizes the azimuthal standard deviation.'''
+    def spread(center):
+        _, deviation = azimuthal.std(image, tuple(center))
+        return np.nansum(deviation[2:radius])
+
+    return optimize.minimize(spread, guess, method='Nelder-Mead',
+                             options=dict(xatol=1e-3, fatol=1e-9)).x
 
 
 def transform_figure() -> None:
@@ -52,31 +63,42 @@ def transform_figure() -> None:
 
 
 def profile_figure() -> None:
-    '''One sphere: the hologram, and its azimuthal median about its center.'''
+    '''One sphere: the hologram, and its azimuthal median about its center.
+
+    The circle transform finds the sphere to a few pixels; the center that
+    makes the hologram most symmetric sharpens the profile.
+    '''
     image = example_hologram('crop.png').data
     x, y = peaks(circletransform(image), 1)
-    center = (float(x[0]), float(y[0]))
+    coarse = (float(x[0]), float(y[0]))
+    center = tuple(float(c) for c in refine(image, coarse))
     median = azimuthal.med(image, center)
-    mean = azimuthal.avg(image, center)
-    radius = np.arange(len(median))
+    rough = azimuthal.med(image, coarse)
     fig, axes = plt.subplots(ncols=2, figsize=(10, 3.8),
                              constrained_layout=True,
                              gridspec_kw=dict(width_ratios=[1, 1.4]))
     axes[0].imshow(image, **STYLE)
-    axes[0].plot(*center, 'c+', ms=14, mew=2)
+    axes[0].plot(*coarse, 'x', color='tab:orange', ms=9, mew=2,
+                 label='circle transform')
+    axes[0].plot(*center, '+', color='c', ms=14, mew=2,
+                 label='refined')
     axes[0].set_title('hologram of one sphere')
+    axes[0].legend(loc='lower right', fontsize=8, framealpha=0.8)
     axes[0].axis('off')
-    axes[1].plot(radius, mean, color='0.7', lw=1, label='avg')
-    axes[1].plot(radius, median, color='C0', lw=1.5, label='med')
+    axes[1].plot(np.arange(len(rough)), rough, color='tab:orange', lw=1,
+                 alpha=0.8, label='about the circle transform peak')
+    axes[1].plot(np.arange(len(median)), median, color='C0', lw=1.5,
+                 label='about the refined center')
     axes[1].axhline(1., color='0.5', lw=0.6, ls=':')
     axes[1].set_xlim(0, min(center) + 5)    # beyond it only the corners
     axes[1].set_xlabel('distance from the center [pixels]')
     axes[1].set_ylabel('normalized intensity')
     axes[1].set_title('azimuthal.med(hologram, center)')
-    axes[1].legend(frameon=False)
+    axes[1].legend(frameon=False, fontsize=8)
     fig.savefig(OUT / 'azimuthal.png', dpi=110)
     plt.close(fig)
-    print('azimuthal.png: center', center)
+    print('azimuthal.png: coarse', coarse, 'refined',
+          tuple(round(c, 2) for c in center))
 
 
 if __name__ == '__main__':
