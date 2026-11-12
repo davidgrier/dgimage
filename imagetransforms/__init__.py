@@ -7,6 +7,7 @@ and others share one implementation of each.
 '''
 from importlib.metadata import PackageNotFoundError, version
 
+from imagetransforms import azimuthal
 from imagetransforms.circletransform import CircleTransform, circletransform
 
 try:
@@ -14,4 +15,4 @@ try:
 except PackageNotFoundError:        # not installed
     __version__ = '0+unknown'
 
-__all__ = ['CircleTransform', 'circletransform']
+__all__ = ['azimuthal', 'CircleTransform', 'circletransform']

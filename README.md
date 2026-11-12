@@ -6,7 +6,7 @@
 [![Tests](https://github.com/davidgrier/imagetransforms/actions/workflows/test.yml/badge.svg)](https://github.com/davidgrier/imagetransforms/actions/workflows/test.yml)
 [![Documentation](https://app.readthedocs.org/projects/imagetransforms/badge/?version=latest)](https://imagetransforms.readthedocs.io/en/latest/)
 
-**imagetransforms** is a small library of the image transformations that the
+**imagetransforms** is a small library of the image transformations and radial statistics that the
 [Grier group](https://github.com/davidgrier) uses across projects.  It needs
 only `numpy` and `scipy`: no camera, no GUI and no analysis framework, so that
 [QVideo](https://github.com/davidgrier/QVideo),
@@ -32,15 +32,24 @@ y, x = np.unravel_index(heat.argmax(), heat.shape)
 The transform of Krishnatreya and Grier locates circularly symmetric features,
 such as the rings of the hologram of a sphere, without knowing their radius.
 A program that transforms many frames of one shape builds a
-`CircleTransform`, which keeps its kernel.
+`CircleTransform`, which keeps its kernel.  The radial profile of a ring
+about its center is
+
+```python
+from imagetransforms import azimuthal
+
+profile = azimuthal.avg(image, center=(x, y))      # also std, med, mad
+```
 
 ## Contents
 
 | Transformation | What it does |
 |----------------|--------------|
 | `circletransform` | orientation alignment transform: a map of the centers of rings |
+| `azimuthal` | average, standard deviation, median and median absolute deviation of an image as a function of the distance from a center |
 
-More will join it as projects of the group need them.
+More will join them as projects of the group need them, such as the
+Crocker-Grier local-maximum finder.
 
 ## Documentation
 

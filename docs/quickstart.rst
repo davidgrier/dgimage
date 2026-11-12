@@ -42,6 +42,28 @@ once and calls it::
     for frame in frames:
         heat = transform(frame)
 
+Radial profiles
+---------------
+
+The profile of a ring pattern about its center, the average of the pixels at
+each distance in whole pixels, comes from the :mod:`~imagetransforms.azimuthal`
+module::
+
+    from imagetransforms import azimuthal
+
+    profile = azimuthal.avg(image, center=(x, y))
+    mean, spread = azimuthal.std(image, center=(x, y))
+    median = azimuthal.med(image, center=(x, y))
+    median, deviation = azimuthal.mad(image, center=(x, y))
+
+``center`` is ``(x, y)`` in pixels.  Without it the center is
+``(nx / 2, ny / 2)``, which is half a pixel beyond the middle pixel of an
+axis of odd length, so give the center when it matters.  The median and its
+absolute deviation are robust against outliers such as dust; a radius that
+contains no pixels is ``NaN``.  The radial geometry depends only on the shape
+and the center and is cached, so a series of frames about one center pays for
+it once.
+
 .. [Krishnatreya2014] B. J. Krishnatreya and D. G. Grier, "Fast feature
    identification for holographic tracking: the orientation alignment
    transform," *Optics Express* **22**, 12773-12778 (2014).

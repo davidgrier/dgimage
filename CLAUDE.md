@@ -22,9 +22,10 @@ small and light:
   switched to this package (the circle transform agreed to 0.0).  If a change
   alters output, say so in `CHANGELOG.md` and tell the other two projects.
 
-Planned additions are in the README table: a Crocker-Grier local-maximum
-finder (as in trackpy) and an azimuthal average, from the old, unpackaged
-`~/python/dgmath`.
+The first release holds the circle transform and the azimuthal statistics
+(moved from `pylorenzmie.lib.Azimuthal`, results identical).  Planned: a
+Crocker-Grier local-maximum finder (as in trackpy).  The old, unpackaged
+`~/python/dgmath` is the ancestor of this package and can retire.
 
 ## Commands
 
@@ -45,7 +46,8 @@ small and make them run.
 ## Layout
 
 One module per transformation in `imagetransforms/`, each re-exported from
-`imagetransforms/__init__.py` (`__all__` lists the public names).  A
+`imagetransforms/__init__.py` (`__all__` lists the public names; `azimuthal`
+is exported as a module, used as `azimuthal.avg(image, center)`).  A
 transformation has a plain function for one call and, where it keeps state
 that depends on the input shape (the circle transform's Fourier kernel), a
 class that caches it; the function reuses a module-level instance for the
