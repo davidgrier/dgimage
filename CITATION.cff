@@ -13,6 +13,7 @@ authors:
     affiliation: New York University
 repository-code: https://github.com/davidgrier/dgimage
 license: GPL-3.0-or-later
+doi: 10.5281/zenodo.24166147
 url: https://dgimage.readthedocs.io
 version: "0.1.0"
 date-released: "2026-11-12"

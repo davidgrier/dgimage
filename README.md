@@ -5,6 +5,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Tests](https://github.com/davidgrier/dgimage/actions/workflows/test.yml/badge.svg)](https://github.com/davidgrier/dgimage/actions/workflows/test.yml)
 [![Documentation](https://app.readthedocs.org/projects/dgimage/badge/?version=latest)](https://dgimage.readthedocs.io/en/latest/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24166147.svg)](https://doi.org/10.5281/zenodo.24166147)
 
 **dgimage** is a small library of the image transformations and radial statistics that the
 [Grier group](https://github.com/davidgrier) uses across projects.  It needs
