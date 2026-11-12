@@ -70,3 +70,8 @@ holographic tracking: the orientation alignment transform," *Optics Express*
 ## License
 
 GPL-3.0-or-later, like QVideo and pylorenzmie.  See [LICENSE](LICENSE).
+
+## Acknowledgements
+
+Work on this project at New York University is supported by the National
+Science Foundation of the United States under award number DMR-2428983.
