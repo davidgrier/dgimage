@@ -11,8 +11,9 @@ The defaults reproduce the published algorithm in double precision.  Two
 options trade accuracy for speed, and are off unless asked for: ``dtype`` for
 single precision (1.7 times faster on a frame of 1280 by 1024, with a
 difference of 3e-7 of the peak) and ``binning`` for a map on a coarser grid
-(2.3 times faster for 2, 6 times for 4, with a peak that moves by about the
-width of the peak, 10 to 20 pixels in a hologram of a sphere).
+(2.3 times faster for 2, 6 times for 4; it smooths the map, so that the
+centroid of a blob is as good as that of the full map, though the highest
+pixel of a blob is not the same pixel).
 
 References
 ----------
@@ -144,15 +145,18 @@ class CircleTransform:
         Average blocks of *binning* by *binning* pixels before transforming.
         The map is on the coarser grid, of shape ``(ny // binning,
         nx // binning)``: a position in it is *binning* times smaller than
-        in the image.  A frame of 1280 by 1024 takes 2.3 times less time with
-        2 and 6 times less with 4.  The cost is position: the peak of a
-        sphere moved by 12 to 20 pixels of the image, about its own width, so
-        use the map to find where to look and refine the center in the full
-        image (for example with :mod:`~dgimage.azimuthal`).  The rings must
-        be coarser than the blocks, or averaging washes them out, and
-        *window* and *polyorder* apply to the binned image, so rings of a
-        given size are smoothed *binning* times more.  Default: 1, the image
-        as it is.
+        in the image: the block *i* is centered at pixel
+        ``binning * i + (binning - 1) / 2``.  A frame of 1280 by 1024 takes
+        2.3 times less time with 2 and 6 times less with 4.  The map is
+        smoother, so locate a feature by the centroid of its blob and not by
+        its highest pixel (that of a sphere is scattered over the blob in the
+        full map, too): the centroids of the spheres of a real hologram agree
+        with those of the full map to about a pixel at 2 and 4.  Refine the
+        center in the full image (for example with
+        :mod:`~dgimage.azimuthal`) before measuring.  The rings must be
+        coarser than the blocks, or averaging washes them out, and *window*
+        and *polyorder* apply to the binned image, so rings of a given size
+        are smoothed *binning* times more.  Default: 1, the image as it is.
     '''
 
     def __init__(self, window: int = WINDOW, polyorder: int = POLYORDER, *,
@@ -305,9 +309,9 @@ def circletransform(image: ArrayLike, window: int = WINDOW,
         Default: ``numpy.float64``.
     binning : int
         Average blocks of this many pixels first, for a map on a coarser grid
-        that takes 2.3 times less time for 2 and 6 times less for 4, with a
-        peak that is only as good as the width of the peak (see
-        :class:`CircleTransform`).  Default: 1.
+        that takes 2.3 times less time for 2 and 6 times less for 4; locate a
+        feature by the centroid of its blob (see :class:`CircleTransform`).
+        Default: 1.
 
     Returns
     -------

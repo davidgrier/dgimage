@@ -23,8 +23,8 @@ Examples
 from __future__ import annotations
 
 from collections.abc import Callable
-from functools import lru_cache, wraps
-from typing import Any, NamedTuple
+from functools import cached_property, lru_cache, wraps
+from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -36,24 +36,49 @@ _Center = tuple[float, float] | NDArray[np.floating]
 _Profile = NDArray[np.floating]
 
 
-class _Context(NamedTuple):
-    '''Cached radial geometry for an image shape and a center.'''
-    r: NDArray[np.int32]            # radius of every pixel, raveled
-    sort_idx: NDArray[np.intp]      # argsort(r): the pixels by radius
-    boundaries: NDArray[np.intp]    # where each radius starts in that order
-    nmax: int                       # number of radii
+class _Context:
+
+    '''The radial geometry of an image shape and a center.
+
+    The radius of every pixel (in whole pixels, raveled) is made at once; the
+    order of the pixels by radius, which only the median needs, and the
+    counts and boundaries of the radii are made the first time they are
+    asked for.  A statistic that does not need them (the average, the
+    standard deviation) never pays for the sort, which is most of the time
+    for a center that has not been seen before.
+    '''
+
+    def __init__(self, ny: int, nx: int, x_p: float, y_p: float) -> None:
+        x = np.arange(nx) - x_p
+        y = np.arange(ny) - y_p
+        self.r: NDArray[np.int32] = np.hypot.outer(y, x).astype(
+            np.int32).ravel()
+        self.nmax = int(self.r.max()) + 1       # number of radii
+
+    @cached_property
+    def sort_idx(self) -> NDArray[np.intp]:
+        '''The pixels by radius (stable).  Radii that fit 16 bits sort by
+        radix sort, ten times faster than the generic stable sort and in the
+        same order.'''
+        r = self.r.astype(np.uint16) if self.nmax <= 0xFFFF else self.r
+        return np.argsort(r, kind='stable')
+
+    @cached_property
+    def counts(self) -> NDArray[np.intp]:
+        '''The number of pixels at each radius.'''
+        return np.bincount(self.r, minlength=self.nmax)
+
+    @cached_property
+    def boundaries(self) -> NDArray[np.intp]:
+        '''Where each radius starts in the order by radius; one more
+        entry than radii, the last being the number of pixels.'''
+        return np.concatenate(([0], np.cumsum(self.counts)))
 
 
 @lru_cache(maxsize=16)
 def _build_context(ny: int, nx: int, x_p: float, y_p: float) -> _Context:
-    '''Compute the radial geometry of (ny, nx) about (x_p, y_p).'''
-    x = np.arange(nx) - x_p
-    y = np.arange(ny) - y_p
-    r = np.hypot.outer(y, x).astype(np.int32).ravel()
-    nmax = int(r.max()) + 1
-    sort_idx = np.argsort(r, kind='stable')
-    boundaries = np.searchsorted(r[sort_idx], np.arange(nmax + 1))
-    return _Context(r=r, sort_idx=sort_idx, boundaries=boundaries, nmax=nmax)
+    '''Return the radial geometry of (ny, nx) about (x_p, y_p), kept.'''
+    return _Context(ny, nx, x_p, y_p)
 
 
 def azimuthaloperator(func: Callable[[_Data, _Context], Any]
@@ -106,7 +131,7 @@ def avg(d: _Data, ctx: _Context) -> _Profile:
         The average value as a function of the distance from the center,
         in whole pixels.
     '''
-    return np.bincount(ctx.r, d) / np.bincount(ctx.r)
+    return np.bincount(ctx.r, d) / ctx.counts
 
 
 @azimuthaloperator
@@ -127,7 +152,7 @@ def std(d: _Data, ctx: _Context) -> tuple[_Profile, _Profile]:
     std : numpy.ndarray
         The azimuthal standard deviation.
     '''
-    nr = np.bincount(ctx.r)
+    nr = ctx.counts
     a = np.bincount(ctx.r, d) / nr
     s = np.sqrt(np.bincount(ctx.r, (d - a[ctx.r]) ** 2) / nr)
     return a, s

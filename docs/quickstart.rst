@@ -56,7 +56,7 @@ Option                          Time      What it costs
 ==============================  ========  ==================================
 (default)                       14 ms     nothing: the reference
 ``dtype=np.float32``            8 ms      3e-7 of the peak; same peak
-``binning=2``                   6 ms      the peak moves by about its width
+``binning=2``                   6 ms      a smoother map, a coarser grid
 ``binning=4``                   2 ms      likewise, and a map a quarter size
 ``float32`` with ``binning=4``  2 ms      both
 ==============================  ========  ==================================
@@ -66,13 +66,19 @@ precision map by 3e-7 of its peak, far below anything that a detector or a
 display can see.  ``binning=n`` averages blocks of *n* by *n* pixels before the
 transform and returns the map on the coarser grid, of shape ``(ny // n,
 nx // n)``, so a position in it is *n* times smaller than in the image.  The
-peak of a sphere moves by about its width (12 to 20 pixels in this hologram),
-and rings finer than the blocks are averaged away, so use the binned map to
-find where to look, and refine the center in the full image::
+map is smoother than the full one, and rings finer than the blocks are
+averaged away.  In this hologram the full map breaks the blob of one sphere
+into fragments scattered over 70 pixels, so its highest pixel is not a stable
+position; the binned map is one blob, and the centroid of that blob agrees
+with the full map's to about a pixel.  Locate a sphere by the centroid, and
+refine the center in the full image before measuring::
 
-    heat = circletransform(image, binning=4, dtype=np.float32)
-    j, i = np.unravel_index(heat.argmax(), heat.shape)
-    coarse = (4 * i, 4 * j)                     # (x, y) in the image
+    from scipy import ndimage
+
+    heat = circletransform(image, binning=2, dtype=np.float32)
+    blobs, count = ndimage.label(heat > 0.25)
+    y, x = ndimage.center_of_mass(heat, blobs, range(1, count + 1))[0]
+    x, y = 2 * x + 0.5, 2 * y + 0.5             # in the pixels of the image
 
 Many frames
 -----------

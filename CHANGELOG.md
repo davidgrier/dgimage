@@ -17,8 +17,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   3e-7 of its peak, and the peak is where it was) and `binning=n` (average
   blocks of `n` by `n` pixels first; the map is on the coarser grid, of shape
   `(ny // n, nx // n)`; 2.3 times faster for 2 and 6 times for 4; the peak of
-  a sphere moves by about its width, so refine the center in the full image).
+  a sphere is one blob whose centroid agrees with the full map's to about a
+  pixel, so locate by the centroid and refine the center in the full image).
   The times are for a real 1280 x 1024 hologram with OpenCV.
+- **A faster `azimuthal` for a new center.**  The order of the pixels by
+  radius, which only the median needs, is made when it is first asked for, and
+  with a 16 bit radix sort (ten times faster than the generic stable sort, in
+  the same order).  The average of a 1280 x 1024 image about a center that
+  has not been used takes 9 ms instead of 88 ms; the numbers are identical.
+  A search that moves the center (a refinement) benefits most.
 
 ### Changed
 

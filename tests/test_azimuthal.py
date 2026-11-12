@@ -102,6 +102,44 @@ class TestMedian(unittest.TestCase):
         self.assertTrue(np.isnan(medians[0]) and np.isnan(dev[0]))
 
 
+class TestGeometry(unittest.TestCase):
+
+    def test_the_sort_is_made_only_for_the_median(self):
+        context = _build_context(30, 40, 20.5, 15.5)
+        azimuthal.avg(np.ones((30, 40)), (20.5, 15.5))
+        azimuthal.std(np.ones((30, 40)), (20.5, 15.5))
+        self.assertNotIn('sort_idx', vars(context))
+        azimuthal.med(np.ones((30, 40)), (20.5, 15.5))
+        self.assertIn('sort_idx', vars(context))
+
+    def test_the_boundaries_are_where_each_radius_starts(self):
+        context = _build_context(25, 33, 10., 12.)
+        ordered = context.r[context.sort_idx]
+        np.testing.assert_array_equal(
+            context.boundaries,
+            np.searchsorted(ordered, np.arange(context.nmax + 1)))
+        self.assertEqual(context.boundaries[-1], 25 * 33)
+
+    def test_the_order_is_that_of_the_generic_stable_sort(self):
+        context = _build_context(40, 50, 25., 20.)
+        np.testing.assert_array_equal(
+            context.sort_idx, np.argsort(context.r, kind='stable'))
+
+    def test_a_radius_of_more_than_16_bits(self):
+        # 70000 radii do not fit in uint16: the generic sort is used
+        image = np.arange(70000.).reshape(1, 70000)
+        context = _build_context(1, 70000, 0., 0.)
+        self.assertGreater(context.nmax, 0xFFFF)
+        np.testing.assert_array_equal(
+            context.sort_idx, np.argsort(context.r, kind='stable'))
+        np.testing.assert_allclose(azimuthal.avg(image, (0., 0.)),
+                                   np.arange(70000.))
+
+    def test_a_radius_with_no_pixels_has_no_count(self):
+        context = _build_context(10, 10, -20., 5.)
+        self.assertEqual(context.counts[0], 0)
+
+
 class TestCache(unittest.TestCase):
 
     def test_the_geometry_is_kept_for_a_shape_and_center(self):
