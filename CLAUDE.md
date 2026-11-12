@@ -61,8 +61,8 @@ in the README table, and a `CHANGELOG.md` entry.
 ## Style
 
 Single quotes (docstrings too), lines of at most 79 characters, NumPy-style
-docstrings, American English.  `ruff` and `pyright` run in CI (the `Lint and
-types` job); the scipy stubs are loose, so wrap scipy results in `np.asarray`
+docstrings, American English.  `ruff` and `pyright` (pinned in the `dev` extra, as in QVideo) run in CI
+(the `Lint and types` job); the scipy stubs are loose, so wrap scipy results in `np.asarray`
 and use `np.real` / `np.imag` rather than `.real` / `.imag` on them.
 
 ## Releasing

@@ -42,7 +42,9 @@ Repository = "https://github.com/davidgrier/dgimage"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
-dev = ["dgimage[test]", "ruff", "pyright"]
+# pyright is pinned: a newer version finds new things, and they are for us to
+# fix when we choose to move (change the pin and the report together).
+dev = ["dgimage[test]", "ruff", "pyright==1.1.414"]
 docs = ["pydata-sphinx-theme", "sphinx", "sphinx-autodoc-typehints"]
 
 [tool.setuptools]
