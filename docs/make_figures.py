@@ -56,8 +56,9 @@ def transform_figure() -> None:
                              constrained_layout=True)
     axes[0].imshow(image, **STYLE)
     axes[0].set_title('hologram of two spheres')
-    axes[1].imshow(heat, cmap='gray', interpolation='none')
-    axes[1].set_title('circletransform(hologram)')
+    # The peaks are narrow against a dark map: the square root stretches them.
+    axes[1].imshow(np.sqrt(heat), cmap='gray', interpolation='none')
+    axes[1].set_title('circletransform(hologram), square root')
     for ax in axes:
         ax.set_xlim(x0, x1)
         ax.set_ylim(y1, y0)

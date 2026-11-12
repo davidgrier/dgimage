@@ -17,7 +17,8 @@ centers of such rings::
 
 For example, a real hologram of two silica spheres (from
 `pylorenzmie <https://github.com/davidgrier/pylorenzmie>`_) becomes two
-sharp peaks, one at the center of each set of rings:
+sharp peaks, one at the center of each set of rings (the map is shown
+with a square-root stretch, which makes the peaks easier to see):
 
 .. image:: _static/circletransform.png
    :alt: A hologram of two spheres and its orientation alignment transform,
