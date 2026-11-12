@@ -41,7 +41,10 @@ Repository = "https://github.com/davidgrier/dgimage"
 "Bug Tracker" = "https://github.com/davidgrier/dgimage/issues"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov"]
+# OpenCV is optional: the derivative filter of the circle transform is
+# several times faster with it, and gives the same numbers.
+fast = ["opencv-python-headless"]
+test = ["dgimage[fast]", "pytest", "pytest-cov"]
 # pyright is pinned: a newer version finds new things, and they are for us to
 # fix when we choose to move (change the pin and the report together).
 dev = ["dgimage[test]", "ruff", "pyright==1.1.414"]

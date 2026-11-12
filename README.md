@@ -20,6 +20,7 @@ can share one implementation of each algorithm.
 
 ```bash
 pip install dgimage
+pip install dgimage[fast]    # with OpenCV: the circle transform is twice as fast
 ```
 
 ## Use

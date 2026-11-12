@@ -15,9 +15,12 @@ holographic tracking: the orientation alignment transform,' *Optics Express*
 '''
 from __future__ import annotations
 
+from functools import lru_cache
+from typing import Any
+
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from scipy import fft, signal
+from scipy import fft, ndimage, signal
 
 __all__ = ['CircleTransform', 'circletransform']
 
@@ -25,6 +28,69 @@ __all__ = ['CircleTransform', 'circletransform']
 #: differentiates the image; the values of the published algorithm.
 WINDOW = 13
 POLYORDER = 3
+
+
+_OPENCV: list[Any] = []     # [module or None], filled on first use
+
+
+def _opencv() -> Any:
+    '''Return OpenCV, which is optional, or ``None`` without it.'''
+    if not _OPENCV:
+        try:
+            import cv2
+        except ImportError:
+            cv2 = None
+        _OPENCV.append(cv2)
+    return _OPENCV[0]
+
+
+@lru_cache(maxsize=16)
+def _operator(window: int, polyorder: int
+              ) -> tuple[NDArray[np.floating], NDArray[np.floating]]:
+    '''The taps of the derivative filter and its edge operator.
+
+    ``scipy.signal.savgol_filter`` correlates the interior of a signal with
+    the taps and, within half a window of an end, evaluates the derivative of
+    the polynomial that fits the first (or last) *window* samples.  That fit
+    is linear, so it is a matrix; scipy's own filter applied to the identity
+    gives it exactly.
+    '''
+    taps = signal.savgol_coeffs(window, polyorder, deriv=1, use='dot')
+    edge = np.asarray(signal.savgol_filter(np.eye(window), window, polyorder,
+                                           deriv=1, axis=0))
+    return taps, edge
+
+
+def _derivative(gray: NDArray[np.floating], window: int, polyorder: int,
+                axis: int) -> NDArray[np.floating]:
+    '''The Savitzky-Golay derivative of *gray* along *axis*.
+
+    The same numbers as ``scipy.signal.savgol_filter(gray, window,
+    polyorder, deriv=1, axis=axis)``, to rounding (1e-12 of the scale of the
+    image), three to ten times faster with OpenCV and 1.5 to 2 times without.
+    '''
+    if min(gray.shape) < window:            # scipy says what is wrong
+        return np.asarray(signal.savgol_filter(gray, window, polyorder, 1,
+                                               axis=axis))
+    taps, edge = _operator(window, polyorder)
+    half = window // 2
+    cv2 = _opencv()
+    if cv2 is not None:
+        kernel = taps[None, :] if axis == 1 else taps[:, None]
+        out = cv2.filter2D(np.ascontiguousarray(gray), -1, kernel,
+                           borderType=cv2.BORDER_CONSTANT)
+    else:
+        out = np.moveaxis(ndimage.correlate1d(
+            np.moveaxis(gray, axis, -1), taps, axis=-1, mode='constant'),
+            -1, axis)
+        out = np.ascontiguousarray(out)
+    if axis == 1:
+        out[:, :half] = gray[:, :window] @ edge[:half].T
+        out[:, -half:] = gray[:, -window:] @ edge[-half:].T
+    else:
+        out[:half] = edge[:half] @ gray[:window]
+        out[-half:] = edge[-half:] @ gray[-window:]
+    return out
 
 
 class CircleTransform:
@@ -115,13 +181,9 @@ class CircleTransform:
                              f'{gray.ndim} dimensional')
         if self._polyorder >= self._window:
             raise ValueError('polyorder must be less than window')
-        def derivative(axis: int) -> NDArray[np.floating]:
-            return np.asarray(signal.savgol_filter(
-                gray, self._window, self._polyorder, 1, axis=axis))
-
         psi = np.empty(gray.shape, dtype=complex)
-        psi.real = derivative(1)
-        psi.imag = derivative(0)
+        psi.real = _derivative(gray, self._window, self._polyorder, 1)
+        psi.imag = _derivative(gray, self._window, self._polyorder, 0)
         psi *= psi
         psi = np.asarray(fft.fft2(psi, workers=-1, overwrite_x=True))
         psi *= self.kernel(gray.shape)

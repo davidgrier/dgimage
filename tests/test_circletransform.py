@@ -1,9 +1,13 @@
 '''Tests of the orientation alignment transform.'''
+import sys
 import unittest
+from unittest import mock
 
 import numpy as np
+from scipy import fft, signal
 
 from dgimage import CircleTransform, circletransform
+from dgimage.circletransform import _OPENCV, _derivative, _opencv
 
 
 def rings(shape=(96, 128), center=(40, 70), k=0.8):
@@ -113,6 +117,125 @@ class TestKernel(unittest.TestCase):
         transform = CircleTransform()
         np.testing.assert_array_equal(transform(rings()),
                                       transform.transform(rings()))
+
+
+def reference(image, window=13, polyorder=3):
+    '''The transform as first written, with scipy's savgol_filter.'''
+    gray = np.asarray(image, dtype=float)
+    psi = np.empty(gray.shape, dtype=complex)
+    psi.real = signal.savgol_filter(gray, window, polyorder, 1, axis=1)
+    psi.imag = signal.savgol_filter(gray, window, polyorder, 1, axis=0)
+    psi *= psi
+    psi = fft.fft2(psi)
+    psi *= CircleTransform(window, polyorder).kernel(gray.shape)
+    psi = fft.ifft2(psi)
+    c = psi.real ** 2 + psi.imag ** 2
+    return c / c.max()
+
+
+def backends():
+    '''The ways to take a derivative: with OpenCV if it is there, and
+    without.'''
+    yield 'scipy', mock.patch('dgimage.circletransform._opencv',
+                              return_value=None)
+    if _opencv() is not None:
+        yield 'opencv', mock.patch('dgimage.circletransform._opencv',
+                                   wraps=_opencv)
+
+
+class TestDerivative(unittest.TestCase):
+
+    '''The derivative is scipy's, to rounding, with or without OpenCV.'''
+
+    def setUp(self):
+        rng = np.random.default_rng(3)
+        self.image = 100. * rng.random((60, 75)) + np.arange(75)
+
+    def test_it_equals_the_filter_of_scipy(self):
+        for name, patch in backends():
+            for window, polyorder in ((13, 3), (7, 2), (5, 1), (21, 4)):
+                for axis in (0, 1):
+                    with self.subTest(backend=name, window=window,
+                                      polyorder=polyorder, axis=axis), patch:
+                        ours = _derivative(self.image, window, polyorder, axis)
+                        theirs = signal.savgol_filter(
+                            self.image, window, polyorder, 1, axis=axis)
+                        np.testing.assert_allclose(
+                            ours, theirs, atol=1e-9 * np.abs(theirs).max())
+
+    def test_the_edges_are_scipys_polynomial_fits(self):
+        # a cubic is differentiated exactly all the way to the ends
+        x = np.arange(40.)
+        image = np.tile(0.01 * x ** 3 - x, (30, 1))
+        for name, patch in backends():
+            with self.subTest(backend=name), patch:
+                out = _derivative(image, 13, 3, 1)
+                np.testing.assert_allclose(
+                    out[0], 0.03 * x ** 2 - 1., atol=1e-8)
+
+    def test_an_image_as_small_as_the_window(self):
+        image = self.image[:13, :13]
+        for name, patch in backends():
+            for axis in (0, 1):
+                with self.subTest(backend=name, axis=axis), patch:
+                    np.testing.assert_allclose(
+                        _derivative(image, 13, 3, axis),
+                        signal.savgol_filter(image, 13, 3, 1, axis=axis),
+                        atol=1e-9)
+
+    def test_an_image_smaller_than_the_window_is_refused_as_before(self):
+        for name, patch in backends():
+            with self.subTest(backend=name), patch:
+                with self.assertRaises(ValueError):
+                    circletransform(np.zeros((8, 8)))
+
+    def test_a_transposed_image(self):
+        image = self.image.T
+        for name, patch in backends():
+            with self.subTest(backend=name), patch:
+                np.testing.assert_allclose(
+                    _derivative(image, 13, 3, 0),
+                    signal.savgol_filter(image, 13, 3, 1, axis=0),
+                    atol=1e-8)
+
+    def test_the_whole_transform_equals_the_original_algorithm(self):
+        image = rings() + 0.05 * np.random.default_rng(0).normal(
+            size=(96, 128))
+        for name, patch in backends():
+            for window, polyorder in ((13, 3), (9, 2)):
+                with self.subTest(backend=name, window=window), patch:
+                    np.testing.assert_allclose(
+                        CircleTransform(window, polyorder).transform(image),
+                        reference(image, window, polyorder), atol=1e-9)
+
+
+class TestOpenCV(unittest.TestCase):
+
+    def setUp(self):
+        self.saved = list(_OPENCV)
+        _OPENCV.clear()
+        self.addCleanup(self.restore)
+
+    def restore(self):
+        _OPENCV[:] = self.saved
+
+    def test_without_opencv_it_is_none(self):
+        with mock.patch.dict(sys.modules, {'cv2': None}):
+            self.assertIsNone(_opencv())
+
+    def test_the_answer_is_kept(self):
+        with mock.patch.dict(sys.modules, {'cv2': None}):
+            _opencv()
+        # the import is not tried again
+        self.assertEqual(len(_OPENCV), 1)
+        self.assertIsNone(_opencv())
+
+    def test_with_opencv_it_is_the_module(self):
+        try:
+            import cv2
+        except ImportError:
+            self.skipTest('OpenCV is not installed')
+        self.assertIs(_opencv(), cv2)
 
 
 if __name__ == '__main__':      # pragma: no cover

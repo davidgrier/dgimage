@@ -11,15 +11,16 @@ and [pylorenzmie](https://github.com/davidgrier/pylorenzmie) (`lib/CircleTransfo
 Neither of those should carry its own copy.  The library therefore stays
 small and light:
 
-- Dependencies are `numpy` and `scipy` only.  No Qt, pandas, OpenCV or
-  camera code.  An accelerator that needs another package (OpenCV for the
-  derivative filter, say) must be an optional extra and must agree with the
-  plain version, which is the reference.
+- Dependencies are `numpy` and `scipy` only.  No Qt, pandas or camera code.
+  OpenCV is the one optional accelerator (extra `fast`): `circletransform`
+  imports it lazily and uses it for the derivatives if it is there.  Any
+  accelerator must be optional and must agree, to rounding, with the plain
+  scipy path, and both paths are tested against `scipy.signal.savgol_filter`.
 - A transformation takes and returns arrays and does not change its input.
   The scale and the dtype of the pixels must not matter: callers pass
   `uint8`, `uint16` counts or normalized floats.
-- Results must stay identical to what pylorenzmie computed before it
-  switched to this package (the circle transform agreed to 0.0).  If a change
+- Results must stay what pylorenzmie computed before it switched to this
+  package (the circle transform agrees to 3e-15).  If a change
   alters output, say so in `CHANGELOG.md` and tell the other two projects.
 
 The first release holds the circle transform and the azimuthal statistics

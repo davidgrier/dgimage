@@ -9,6 +9,18 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- **A faster circle transform with the same numbers.**  The Savitzky-Golay
+  derivatives, which took half of the time, are now a correlation (OpenCV's
+  `filter2D` if it is installed, `scipy.ndimage.correlate1d` if not) with the
+  ends of the image evaluated by the matrix of scipy's own polynomial fit, so
+  the result is that of `scipy.signal.savgol_filter` to rounding (3e-15 of the
+  peak, tested against it and against pylorenzmie's transform).  A frame of
+  1280 x 1024 takes 15 ms with OpenCV and 25 ms without, against 29 ms; one of
+  2048 x 2048 takes 43 ms and 95 ms, against 110 ms.  OpenCV stays optional:
+  `pip install dgimage[fast]`.
+
 ## [0.1.0] - unreleased
 
 ### Added

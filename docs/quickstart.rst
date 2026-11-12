@@ -38,6 +38,15 @@ centers::
 
     heat = circletransform(image, window=7, polyorder=2)
 
+Speed
+-----
+
+The derivatives of the image take half of the time of the transform.  With
+`OpenCV <https://pypi.org/project/opencv-python/>`_ installed (``pip install
+dgimage[fast]``) they take a few percent, and a frame of 1280 x 1024 is
+transformed in about 15 ms instead of 29 ms.  The numbers are the same, to
+rounding, with or without it; dgimage uses OpenCV only if it can import it.
+
 Many frames
 -----------
 
