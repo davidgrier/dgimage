@@ -9,6 +9,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-12
+
 ### Added
 
 - **Two options for a faster circle transform that give up some accuracy**,
@@ -39,7 +41,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   2048 x 2048 takes 43 ms and 95 ms, against 110 ms.  OpenCV stays optional:
   `pip install dgimage[fast]`.
 
-## [0.1.0] - unreleased
+## [0.1.0] - 2026-11-12
 
 ### Added
 
