@@ -209,6 +209,122 @@ class TestDerivative(unittest.TestCase):
                         reference(image, window, polyorder), atol=1e-9)
 
 
+class TestSinglePrecision(unittest.TestCase):
+
+    def setUp(self):
+        rng = np.random.default_rng(5)
+        self.image = rings((96, 128), (40, 70)) + 0.1 * rng.normal(
+            size=(96, 128))
+
+    def test_the_map_is_float32(self):
+        heat = circletransform(self.image, dtype=np.float32)
+        self.assertEqual(heat.dtype, np.float32)
+        self.assertEqual(heat.shape, (96, 128))
+
+    def test_the_default_is_double_precision(self):
+        self.assertEqual(CircleTransform().dtype, np.float64)
+        self.assertEqual(circletransform(self.image).dtype, np.float64)
+
+    def test_it_agrees_with_double_precision(self):
+        for name, patch in backends():
+            with self.subTest(backend=name), patch:
+                single = circletransform(self.image, dtype=np.float32)
+                double = circletransform(self.image)
+                self.assertLess(float(np.abs(single - double).max()), 1e-5)
+                self.assertEqual(peak(single), peak(double))
+
+    def test_the_dtype_may_be_a_string_or_a_type(self):
+        for dtype in ('float32', np.float32, np.dtype('float32')):
+            with self.subTest(dtype=dtype):
+                self.assertEqual(CircleTransform(dtype=dtype).dtype,
+                                 np.float32)
+
+    def test_other_precisions_are_refused(self):
+        for dtype in (np.float16, np.int32, 'complex64'):
+            with self.subTest(dtype=dtype):
+                with self.assertRaises(ValueError):
+                    CircleTransform(dtype=dtype)
+
+    def test_the_kernel_has_the_precision(self):
+        self.assertEqual(CircleTransform(dtype=np.float32).kernel(
+            (32, 32)).dtype, np.complex64)
+        self.assertEqual(CircleTransform().kernel((32, 32)).dtype,
+                         np.complex128)
+
+    def test_changing_the_precision_changes_the_kernel(self):
+        transform = CircleTransform()
+        double = transform.kernel((32, 32))
+        transform.dtype = np.float32
+        self.assertEqual(transform.kernel((32, 32)).dtype, np.complex64)
+        transform.dtype = np.float64
+        np.testing.assert_array_equal(transform.kernel((32, 32)), double)
+
+    def test_a_uniform_image_gives_zeros(self):
+        heat = circletransform(np.full((32, 40), 7.), dtype=np.float32)
+        self.assertTrue(np.all(heat == 0.))
+
+    def test_the_derivative_in_single_precision(self):
+        image = self.image.astype(np.float32)
+        for name, patch in backends():
+            for axis in (0, 1):
+                with self.subTest(backend=name, axis=axis), patch:
+                    out = _derivative(image, 13, 3, axis)
+                    self.assertEqual(out.dtype, np.float32)
+                    np.testing.assert_allclose(
+                        out, signal.savgol_filter(image, 13, 3, 1, axis=axis),
+                        atol=1e-4 * np.abs(out).max())
+
+
+class TestBinning(unittest.TestCase):
+
+    def setUp(self):
+        # rings 20 pixels apart: binning averages away finer ones
+        self.image = rings((192, 256), (80, 140), k=0.3)
+
+    def test_the_default_is_no_binning(self):
+        self.assertEqual(CircleTransform().binning, 1)
+        np.testing.assert_array_equal(
+            circletransform(self.image, binning=1), circletransform(self.image))
+
+    def test_the_map_is_on_the_coarser_grid(self):
+        for n in (2, 3, 4):
+            with self.subTest(binning=n):
+                heat = circletransform(self.image, binning=n)
+                self.assertEqual(heat.shape, (192 // n, 256 // n))
+                self.assertAlmostEqual(float(heat.max()), 1.)
+
+    def test_the_peak_is_where_it_was_to_within_the_binning(self):
+        y, x = 80, 140
+        for n in (2, 4):
+            with self.subTest(binning=n):
+                j, i = peak(circletransform(self.image, window=5,
+                                            polyorder=2, binning=n))
+                self.assertLessEqual(abs(n * j - y), 2 * n)
+                self.assertLessEqual(abs(n * i - x), 2 * n)
+
+    def test_rows_and_columns_that_do_not_fill_a_block_are_dropped(self):
+        heat = circletransform(self.image[:191, :255], binning=4)
+        self.assertEqual(heat.shape, (47, 63))
+
+    def test_a_block_is_the_mean_of_its_pixels(self):
+        from dgimage.circletransform import _bin
+        image = np.arange(16.).reshape(4, 4)
+        np.testing.assert_array_equal(
+            _bin(image, 2), [[2.5, 4.5], [10.5, 12.5]])
+
+    def test_it_is_not_below_one(self):
+        self.assertEqual(CircleTransform(binning=0).binning, 1)
+
+    def test_an_image_smaller_than_a_block_is_refused(self):
+        with self.assertRaises(ValueError):
+            circletransform(np.zeros((3, 3)), binning=4)
+
+    def test_it_combines_with_single_precision(self):
+        heat = circletransform(self.image, binning=2, dtype=np.float32)
+        self.assertEqual(heat.dtype, np.float32)
+        self.assertEqual(heat.shape, (96, 128))
+
+
 class TestOpenCV(unittest.TestCase):
 
     def setUp(self):

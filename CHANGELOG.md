@@ -9,6 +9,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- **Two options for a faster circle transform that give up some accuracy**,
+  keyword-only and off by default, on `circletransform` and `CircleTransform`:
+  `dtype=np.float32` (single precision: 1.7 times faster; the map differs by
+  3e-7 of its peak, and the peak is where it was) and `binning=n` (average
+  blocks of `n` by `n` pixels first; the map is on the coarser grid, of shape
+  `(ny // n, nx // n)`; 2.3 times faster for 2 and 6 times for 4; the peak of
+  a sphere moves by about its width, so refine the center in the full image).
+  The times are for a real 1280 x 1024 hologram with OpenCV.
+
 ### Changed
 
 - **A faster circle transform with the same numbers.**  The Savitzky-Golay

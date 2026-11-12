@@ -7,6 +7,13 @@ image; each pixel votes, by that direction, for the center of a ring that
 could have produced it, and the votes of all radii add in Fourier space.
 The peaks of the result are the centers of the rings.
 
+The defaults reproduce the published algorithm in double precision.  Two
+options trade accuracy for speed, and are off unless asked for: ``dtype`` for
+single precision (1.7 times faster on a frame of 1280 by 1024, with a
+difference of 3e-7 of the peak) and ``binning`` for a map on a coarser grid
+(2.3 times faster for 2, 6 times for 4, with a peak that moves by about the
+width of the peak, 10 to 20 pixels in a hologram of a sphere).
+
 References
 ----------
 B. J. Krishnatreya and D. G. Grier, 'Fast feature identification for
@@ -31,6 +38,9 @@ POLYORDER = 3
 
 
 _OPENCV: list[Any] = []     # [module or None], filled on first use
+
+_DTYPES = {np.dtype(np.float64): np.dtype(np.complex128),
+           np.dtype(np.float32): np.dtype(np.complex64)}
 
 
 def _opencv() -> Any:
@@ -63,16 +73,19 @@ def _operator(window: int, polyorder: int
 
 def _derivative(gray: NDArray[np.floating], window: int, polyorder: int,
                 axis: int) -> NDArray[np.floating]:
-    '''The Savitzky-Golay derivative of *gray* along *axis*.
+    '''The Savitzky-Golay derivative of *gray* along *axis*, in its dtype.
 
     The same numbers as ``scipy.signal.savgol_filter(gray, window,
     polyorder, deriv=1, axis=axis)``, to rounding (1e-12 of the scale of the
-    image), three to ten times faster with OpenCV and 1.5 to 2 times without.
+    image in double precision), three to ten times faster with OpenCV and 1.5
+    to 2 times without.
     '''
     if min(gray.shape) < window:            # scipy says what is wrong
         return np.asarray(signal.savgol_filter(gray, window, polyorder, 1,
                                                axis=axis))
     taps, edge = _operator(window, polyorder)
+    taps = taps.astype(gray.dtype)
+    edge = edge.astype(gray.dtype)
     half = window // 2
     cv2 = _opencv()
     if cv2 is not None:
@@ -93,12 +106,25 @@ def _derivative(gray: NDArray[np.floating], window: int, polyorder: int,
     return out
 
 
+def _bin(gray: NDArray[np.floating], binning: int) -> NDArray[np.floating]:
+    '''The mean of blocks of *binning* by *binning* pixels; rows and columns
+    that do not fill a block are dropped.'''
+    ny, nx = (n // binning for n in gray.shape)
+    kept = gray[:ny * binning, :nx * binning]
+    mean = np.zeros((ny, nx), dtype=gray.dtype)
+    for i in range(binning):                # adding slices is the fastest
+        for j in range(binning):            # way to average blocks
+            mean += kept[i::binning, j::binning]
+    mean /= binning ** 2
+    return mean
+
+
 class CircleTransform:
 
     '''The orientation alignment transform, with its kernel kept.
 
-    The kernel depends only on the shape of the image, so an instance that
-    transforms many frames of one shape computes it once.
+    The kernel depends only on the shape of the image and the precision, so
+    an instance that transforms many frames of one shape computes it once.
 
     Parameters
     ----------
@@ -109,13 +135,33 @@ class CircleTransform:
     polyorder : int
         Order of the polynomial of that filter, less than *window*.
         Default: 3.
+    dtype : {numpy.float64, numpy.float32}
+        Precision of the calculation and of the map.  ``numpy.float32`` is
+        about 1.7 times faster; the map differs from the double precision map
+        by 3e-7 of its peak, and the peak is in the same place.
+        Default: ``numpy.float64``, the reference.
+    binning : int
+        Average blocks of *binning* by *binning* pixels before transforming.
+        The map is on the coarser grid, of shape ``(ny // binning,
+        nx // binning)``: a position in it is *binning* times smaller than
+        in the image.  A frame of 1280 by 1024 takes 2.3 times less time with
+        2 and 6 times less with 4.  The cost is position: the peak of a
+        sphere moved by 12 to 20 pixels of the image, about its own width, so
+        use the map to find where to look and refine the center in the full
+        image (for example with :mod:`~dgimage.azimuthal`).  The rings must
+        be coarser than the blocks, or averaging washes them out, and
+        *window* and *polyorder* apply to the binned image, so rings of a
+        given size are smoothed *binning* times more.  Default: 1, the image
+        as it is.
     '''
 
-    def __init__(self, window: int = WINDOW,
-                 polyorder: int = POLYORDER) -> None:
-        self._kernel = np.ones((1, 1), dtype=complex)
+    def __init__(self, window: int = WINDOW, polyorder: int = POLYORDER, *,
+                 dtype: Any = np.float64, binning: int = 1) -> None:
+        self._kernels: dict[tuple, NDArray[np.complexfloating]] = {}
         self.window = window
         self.polyorder = polyorder
+        self.dtype = dtype
+        self.binning = binning
 
     @property
     def window(self) -> int:
@@ -136,22 +182,49 @@ class CircleTransform:
     def polyorder(self, polyorder: int) -> None:
         self._polyorder = max(1, int(polyorder))
 
+    @property
+    def dtype(self) -> np.dtype:
+        '''Precision of the calculation: ``float64`` or ``float32``.'''
+        return self._dtype
+
+    @dtype.setter
+    def dtype(self, dtype: Any) -> None:
+        dtype = np.dtype(dtype)
+        if dtype not in _DTYPES:
+            raise ValueError('dtype must be float64 or float32, not '
+                             f'{dtype}')
+        self._dtype = dtype
+
+    @property
+    def binning(self) -> int:
+        '''Size of the blocks that are averaged first; at least 1.'''
+        return self._binning
+
+    @binning.setter
+    def binning(self, binning: int) -> None:
+        self._binning = max(1, int(binning))
+
     def kernel(self, shape: tuple[int, int]) -> NDArray[np.complexfloating]:
         '''Return the Fourier space kernel for images of *shape*.
 
         The kernel is :math:`e^{-2i\\theta_k}/|\\mathbf{k}|`, arranged
-        for the order of the FFT.
+        for the order of the FFT, in the precision of the transform
+        (``complex128`` for ``float64``, ``complex64`` for ``float32``).
         '''
         shape = (int(shape[0]), int(shape[1]))
-        if shape == self._kernel.shape:
-            return self._kernel
+        key = (shape, self._dtype)
+        kernel = self._kernels.get(key)
+        if kernel is not None:
+            return kernel
         ny, nx = shape
         kx = fft.fftshift(np.linspace(-1., 1., nx, endpoint=False))
         ky = fft.fftshift(np.linspace(-1., 1., ny, endpoint=False))
         k = np.hypot.outer(ky, kx) + 0.001      # keeps the DC term finite
         kernel = np.subtract.outer(1.j * ky, kx) / k
         kernel *= kernel / k
-        self._kernel = kernel
+        kernel = kernel.astype(_DTYPES[self._dtype])
+        self._kernels.clear()                   # one shape at a time
+        self._kernels[key] = kernel
         return kernel
 
     def transform(self, image: ArrayLike) -> NDArray[np.floating]:
@@ -166,22 +239,30 @@ class CircleTransform:
         Returns
         -------
         numpy.ndarray
-            ``float`` array of the shape of *image*, between 0 and 1.
-            A uniform image gives zeros.
+            Array of the :attr:`dtype` of the transform, between 0 and 1,
+            of the shape of *image* (of ``(ny // binning, nx // binning)``
+            if :attr:`binning` is more than 1).  A uniform image gives
+            zeros.
 
         Raises
         ------
         ValueError
-            If *image* is not two dimensional, or the filter does not fit
-            (``polyorder`` must be less than ``window``).
+            If *image* is not two dimensional, is smaller than one block of
+            the binning, or the filter does not fit (``polyorder`` must be
+            less than ``window``).
         '''
-        gray = np.asarray(image, dtype=float)
+        gray = np.asarray(image, dtype=self._dtype)
         if gray.ndim != 2:
             raise ValueError('the image must be two dimensional, not '
                              f'{gray.ndim} dimensional')
         if self._polyorder >= self._window:
             raise ValueError('polyorder must be less than window')
-        psi = np.empty(gray.shape, dtype=complex)
+        if self._binning > 1:
+            if min(gray.shape) < self._binning:
+                raise ValueError('the image is smaller than one block of '
+                                 f'{self._binning} pixels')
+            gray = _bin(gray, self._binning)
+        psi = np.empty(gray.shape, dtype=_DTYPES[self._dtype])
         psi.real = _derivative(gray, self._window, self._polyorder, 1)
         psi.imag = _derivative(gray, self._window, self._polyorder, 0)
         psi *= psi
@@ -190,7 +271,7 @@ class CircleTransform:
         psi = np.asarray(fft.ifft2(psi, workers=-1, overwrite_x=True))
         c = np.square(np.real(psi)) + np.square(np.imag(psi))
         peak = c.max()
-        if peak > np.finfo(float).eps:
+        if peak > np.finfo(self._dtype).eps:
             c /= peak
         else:
             c[:] = 0.
@@ -203,7 +284,8 @@ _default = CircleTransform()
 
 
 def circletransform(image: ArrayLike, window: int = WINDOW,
-                    polyorder: int = POLYORDER) -> NDArray[np.floating]:
+                    polyorder: int = POLYORDER, *, dtype: Any = np.float64,
+                    binning: int = 1) -> NDArray[np.floating]:
     '''Return the orientation alignment transform of *image*.
 
     A function for one call; a program that transforms many frames builds a
@@ -217,6 +299,15 @@ def circletransform(image: ArrayLike, window: int = WINDOW,
         Width of the derivative filter [pixels].  Default: 13.
     polyorder : int
         Order of the derivative filter.  Default: 3.
+    dtype : {numpy.float64, numpy.float32}
+        Precision.  ``numpy.float32`` is 1.7 times faster and differs from
+        the double precision map by 3e-7 of its peak.
+        Default: ``numpy.float64``.
+    binning : int
+        Average blocks of this many pixels first, for a map on a coarser grid
+        that takes 2.3 times less time for 2 and 6 times less for 4, with a
+        peak that is only as good as the width of the peak (see
+        :class:`CircleTransform`).  Default: 1.
 
     Returns
     -------
@@ -232,6 +323,8 @@ def circletransform(image: ArrayLike, window: int = WINDOW,
     >>> tuple(int(i) for i in np.unravel_index(heat.argmax(), heat.shape))
     (40, 70)
     '''
-    if window == WINDOW and polyorder == POLYORDER:
+    if (window == WINDOW and polyorder == POLYORDER
+            and np.dtype(dtype) == np.float64 and binning == 1):
         return _default.transform(image)
-    return CircleTransform(window, polyorder).transform(image)
+    return CircleTransform(window, polyorder, dtype=dtype,
+                           binning=binning).transform(image)

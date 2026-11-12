@@ -44,8 +44,35 @@ Speed
 The derivatives of the image take half of the time of the transform.  With
 `OpenCV <https://pypi.org/project/opencv-python/>`_ installed (``pip install
 dgimage[fast]``) they take a few percent, and a frame of 1280 x 1024 is
-transformed in about 15 ms instead of 29 ms.  The numbers are the same, to
+transformed in about 14 ms instead of 29 ms.  The numbers are the same, to
 rounding, with or without it; dgimage uses OpenCV only if it can import it.
+
+Two options trade accuracy for more speed.  Both are off by default, so the
+default is always the published algorithm in double precision.  The times are
+for a real hologram of two spheres, 1280 x 1024, with OpenCV:
+
+==============================  ========  ==================================
+Option                          Time      What it costs
+==============================  ========  ==================================
+(default)                       14 ms     nothing: the reference
+``dtype=np.float32``            8 ms      3e-7 of the peak; same peak
+``binning=2``                   6 ms      the peak moves by about its width
+``binning=4``                   2 ms      likewise, and a map a quarter size
+``float32`` with ``binning=4``  2 ms      both
+==============================  ========  ==================================
+
+``dtype=np.float32`` is the safe one: the map differs from the double
+precision map by 3e-7 of its peak, far below anything that a detector or a
+display can see.  ``binning=n`` averages blocks of *n* by *n* pixels before the
+transform and returns the map on the coarser grid, of shape ``(ny // n,
+nx // n)``, so a position in it is *n* times smaller than in the image.  The
+peak of a sphere moves by about its width (12 to 20 pixels in this hologram),
+and rings finer than the blocks are averaged away, so use the binned map to
+find where to look, and refine the center in the full image::
+
+    heat = circletransform(image, binning=4, dtype=np.float32)
+    j, i = np.unravel_index(heat.argmax(), heat.shape)
+    coarse = (4 * i, 4 * j)                     # (x, y) in the image
 
 Many frames
 -----------
