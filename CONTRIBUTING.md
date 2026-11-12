@@ -2,9 +2,12 @@
 
 ## What belongs here
 
-A transformation of an image (or of a stack of them) that more than one
-project of the group uses, or that is general enough to be reused: the
-orientation alignment transform, a local-maximum finder, an azimuthal average.
+An algorithm of the group that more than one project uses, **for which no
+existing library has a better solution**: the orientation alignment transform,
+the azimuthal statistics.  If scipy, scikit-image, OpenCV, trackpy or another
+package already does it as well or better, use that package and do not
+re-implement it here, however short the code.  Check before you write.
+
 The library depends on `numpy` and `scipy` only; an accelerator that needs
 another package (OpenCV, for example) must be optional and must give the same
 answer.  Code for a camera, a GUI or a particular analysis belongs in

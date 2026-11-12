@@ -24,9 +24,17 @@ small and light:
   alters output, say so in `CHANGELOG.md` and tell the other two projects.
 
 The first release holds the circle transform and the azimuthal statistics
-(moved from `pylorenzmie.lib.Azimuthal`, results identical).  Planned: a
-Crocker-Grier local-maximum finder (as in trackpy).  The old, unpackaged
-`~/python/dgmath` is the ancestor of this package and can retire.
+(moved from `pylorenzmie.lib.Azimuthal`, results identical).  The old,
+unpackaged `~/python/dgmath` is the ancestor of this package and can retire.
+
+**Scope rule (the owner's): dgimage holds only algorithms for which no
+existing library has a better solution.**  Do not add, propose or document an
+algorithm that scipy, scikit-image, OpenCV, trackpy or similar already does as
+well or better (a local-maximum finder was considered and declined, 2026-11-12:
+the dilation is a few lines of scipy and trackpy refines and filters).  Check
+the existing libraries first; the circle transform (the group's own) and the
+azimuthal statistics (no library offers `med` and `mad` of radii together with
+the cached geometry) pass that test.
 
 ## Commands
 

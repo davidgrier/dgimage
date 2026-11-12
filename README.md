@@ -54,8 +54,8 @@ profile = azimuthal.med(image, center=(x, y))      # also avg, std, mad
 | `circletransform` | orientation alignment transform: a map of the centers of rings |
 | `azimuthal` | average, standard deviation, median and median absolute deviation of an image as a function of the distance from a center |
 
-More will join them as projects of the group need them, such as the
-Crocker-Grier local-maximum finder.
+dgimage holds only algorithms of the group for which no existing library has
+a better solution.
 
 ## Documentation
 
