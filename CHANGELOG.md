@@ -9,6 +9,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-12
+
+### Fixed
+
+- The docstring of `CircleTransform.dtype` began "Precision of the
+  calculation: ...", which Sphinx with Napoleon read as a type specification:
+  a project that documents the class (pylorenzmie, which builds its
+  documentation with warnings as errors) got two unresolved cross-references.
+  The words are changed; nothing else is.
+
 ## [0.2.0] - 2026-11-12
 
 ### Added

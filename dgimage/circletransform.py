@@ -188,7 +188,7 @@ class CircleTransform:
 
     @property
     def dtype(self) -> np.dtype:
-        '''Precision of the calculation: ``float64`` or ``float32``.'''
+        '''The precision of the calculation, ``float64`` or ``float32``.'''
         return self._dtype
 
     @dtype.setter
