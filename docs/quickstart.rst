@@ -10,7 +10,7 @@ transform [Krishnatreya2014]_ turns an image into a map whose peaks are the
 centers of such rings::
 
     import numpy as np
-    from imagetransforms import circletransform
+    from dgimage import circletransform
 
     heat = circletransform(image)
     y, x = np.unravel_index(heat.argmax(), heat.shape)
@@ -33,10 +33,10 @@ Many frames
 -----------
 
 The Fourier space kernel depends on the shape of the image only.  A program
-that transforms a series of frames builds a :class:`~imagetransforms.CircleTransform`
+that transforms a series of frames builds a :class:`~dgimage.CircleTransform`
 once and calls it::
 
-    from imagetransforms import CircleTransform
+    from dgimage import CircleTransform
 
     transform = CircleTransform()
     for frame in frames:
@@ -46,10 +46,10 @@ Radial profiles
 ---------------
 
 The profile of a ring pattern about its center, the average of the pixels at
-each distance in whole pixels, comes from the :mod:`~imagetransforms.azimuthal`
+each distance in whole pixels, comes from the :mod:`~dgimage.azimuthal`
 module::
 
-    from imagetransforms import azimuthal
+    from dgimage import azimuthal
 
     profile = azimuthal.avg(image, center=(x, y))
     mean, spread = azimuthal.std(image, center=(x, y))

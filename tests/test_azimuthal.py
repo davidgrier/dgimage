@@ -3,8 +3,8 @@ import unittest
 
 import numpy as np
 
-from imagetransforms import azimuthal
-from imagetransforms.azimuthal import _build_context
+from dgimage import azimuthal
+from dgimage.azimuthal import _build_context
 
 
 def distance(shape=(41, 51), center=(25., 20.)):

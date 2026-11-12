@@ -13,7 +13,7 @@ series of frames of one shape, about one center, pays for it once.
 Examples
 --------
 >>> import numpy as np
->>> from imagetransforms import azimuthal
+>>> from dgimage import azimuthal
 >>> y, x = np.indices((9, 9))
 >>> image = np.hypot(x - 4, y - 4)
 >>> profile = azimuthal.avg(image, center=(4, 4))     # (x, y)

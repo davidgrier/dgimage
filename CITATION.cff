@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: 'If you use this software, please cite it as below.'
 type: software
-title: imagetransforms
+title: dgimage
 abstract: >-
   Lightweight image transformations for holography and microscopy,
   such as the orientation alignment transform, shared by QVideo,
@@ -11,9 +11,9 @@ authors:
     given-names: David G.
     orcid: https://orcid.org/0000-0002-4382-5139
     affiliation: New York University
-repository-code: https://github.com/davidgrier/imagetransforms
+repository-code: https://github.com/davidgrier/dgimage
 license: GPL-3.0-or-later
-url: https://imagetransforms.readthedocs.io
+url: https://dgimage.readthedocs.io
 version: "0.1.0"
 date-released: "2026-11-12"
 keywords:

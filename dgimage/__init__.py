@@ -7,11 +7,11 @@ and others share one implementation of each.
 '''
 from importlib.metadata import PackageNotFoundError, version
 
-from imagetransforms import azimuthal
-from imagetransforms.circletransform import CircleTransform, circletransform
+from dgimage import azimuthal
+from dgimage.circletransform import CircleTransform, circletransform
 
 try:
-    __version__ = version('imagetransforms')
+    __version__ = version('dgimage')
 except PackageNotFoundError:        # not installed
     __version__ = '0+unknown'
 

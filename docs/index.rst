@@ -1,4 +1,4 @@
-imagetransforms
+dgimage
 ===============
 
 A small library of the image transformations and radial statistics that the Grier group uses
@@ -7,7 +7,7 @@ across projects, with no dependencies beyond ``numpy`` and ``scipy``, so that
 `pylorenzmie <https://github.com/davidgrier/pylorenzmie>`_ and other programs
 share one implementation of each algorithm.
 
-Install it with ``pip install imagetransforms``.
+Install it with ``pip install dgimage``.
 
 .. toctree::
    :maxdepth: 2

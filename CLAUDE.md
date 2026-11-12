@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Purpose
 
-`imagetransforms` is the one shared implementation of image transformations
+`dgimage` is the one shared implementation of image transformations
 that originate in the Grier group and are used by more than one project:
 [QVideo](https://github.com/davidgrier/QVideo) (the `CircleTransformFilter`)
 and [pylorenzmie](https://github.com/davidgrier/pylorenzmie) (`lib/CircleTransform`).
@@ -45,8 +45,8 @@ small and make them run.
 
 ## Layout
 
-One module per transformation in `imagetransforms/`, each re-exported from
-`imagetransforms/__init__.py` (`__all__` lists the public names; `azimuthal`
+One module per transformation in `dgimage/`, each re-exported from
+`dgimage/__init__.py` (`__all__` lists the public names; `azimuthal`
 is exported as a module, used as `azimuthal.avg(image, center)`).  A
 transformation has a plain function for one call and, where it keeps state
 that depends on the input shape (the circle transform's Fourier kernel), a

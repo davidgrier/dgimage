@@ -1,12 +1,12 @@
-# imagetransforms: image transformations for holography and microscopy
+# dgimage: image transformations for holography and microscopy
 
-[![PyPI version](https://img.shields.io/pypi/v/imagetransforms)](https://pypi.org/project/imagetransforms/)
-[![Python](https://img.shields.io/pypi/pyversions/imagetransforms)](https://pypi.org/project/imagetransforms/)
+[![PyPI version](https://img.shields.io/pypi/v/dgimage)](https://pypi.org/project/dgimage/)
+[![Python](https://img.shields.io/pypi/pyversions/dgimage)](https://pypi.org/project/dgimage/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Tests](https://github.com/davidgrier/imagetransforms/actions/workflows/test.yml/badge.svg)](https://github.com/davidgrier/imagetransforms/actions/workflows/test.yml)
-[![Documentation](https://app.readthedocs.org/projects/imagetransforms/badge/?version=latest)](https://imagetransforms.readthedocs.io/en/latest/)
+[![Tests](https://github.com/davidgrier/dgimage/actions/workflows/test.yml/badge.svg)](https://github.com/davidgrier/dgimage/actions/workflows/test.yml)
+[![Documentation](https://app.readthedocs.org/projects/dgimage/badge/?version=latest)](https://dgimage.readthedocs.io/en/latest/)
 
-**imagetransforms** is a small library of the image transformations and radial statistics that the
+**dgimage** is a small library of the image transformations and radial statistics that the
 [Grier group](https://github.com/davidgrier) uses across projects.  It needs
 only `numpy` and `scipy`: no camera, no GUI and no analysis framework, so that
 [QVideo](https://github.com/davidgrier/QVideo),
@@ -16,14 +16,14 @@ can share one implementation of each algorithm.
 ## Install
 
 ```bash
-pip install imagetransforms
+pip install dgimage
 ```
 
 ## Use
 
 ```python
 import numpy as np
-from imagetransforms import circletransform
+from dgimage import circletransform
 
 heat = circletransform(image)      # peaks are the centers of rings
 y, x = np.unravel_index(heat.argmax(), heat.shape)
@@ -36,7 +36,7 @@ A program that transforms many frames of one shape builds a
 about its center is
 
 ```python
-from imagetransforms import azimuthal
+from dgimage import azimuthal
 
 profile = azimuthal.avg(image, center=(x, y))      # also std, med, mad
 ```
@@ -53,7 +53,7 @@ Crocker-Grier local-maximum finder.
 
 ## Documentation
 
-<https://imagetransforms.readthedocs.io>
+<https://dgimage.readthedocs.io>
 
 ## Citing
 

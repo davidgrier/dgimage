@@ -1,4 +1,4 @@
-"""Sphinx configuration for imagetransforms."""
+"""Sphinx configuration for dgimage."""
 
 import sys
 from importlib.metadata import version as _get_version
@@ -8,10 +8,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # -- Project information -----------------------------------------------------
 
-project = 'imagetransforms'
+project = 'dgimage'
 author = 'David G. Grier'
 copyright = '2026, David G. Grier'
-release = _get_version('imagetransforms')
+release = _get_version('dgimage')
 
 # -- General configuration ---------------------------------------------------
 
@@ -46,12 +46,12 @@ exclude_patterns = ['_build']
 # -- HTML output -------------------------------------------------------------
 
 html_theme = 'pydata_sphinx_theme'
-html_title = 'imagetransforms'
+html_title = 'dgimage'
 html_static_path = ['_static']
 html_css_files = ['nyu.css']
 
 html_theme_options = {
-    'github_url': 'https://github.com/davidgrier/imagetransforms',
+    'github_url': 'https://github.com/davidgrier/dgimage',
     'show_toc_level': 2,
     'navigation_with_keys': True,
     'show_nav_level': 2,

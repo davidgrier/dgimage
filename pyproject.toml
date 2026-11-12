@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "imagetransforms"
+name = "dgimage"
 version = "0.1.0"
 description = "Lightweight image transformations for holography and microscopy"
 readme = "README.md"
@@ -35,28 +35,28 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/davidgrier/imagetransforms"
-Documentation = "https://imagetransforms.readthedocs.io"
-Repository = "https://github.com/davidgrier/imagetransforms"
-"Bug Tracker" = "https://github.com/davidgrier/imagetransforms/issues"
+Homepage = "https://github.com/davidgrier/dgimage"
+Documentation = "https://dgimage.readthedocs.io"
+Repository = "https://github.com/davidgrier/dgimage"
+"Bug Tracker" = "https://github.com/davidgrier/dgimage/issues"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
-dev = ["imagetransforms[test]", "ruff", "pyright"]
+dev = ["dgimage[test]", "ruff", "pyright"]
 docs = ["pydata-sphinx-theme", "sphinx", "sphinx-autodoc-typehints"]
 
 [tool.setuptools]
-packages = ["imagetransforms"]
+packages = ["dgimage"]
 
 [tool.setuptools.package-data]
-imagetransforms = ["py.typed"]
+dgimage = ["py.typed"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "imagetransforms"]
+testpaths = ["tests", "dgimage"]
 addopts = "--doctest-modules --doctest-glob='' --ignore=docs"
 
 [tool.coverage.run]
-source = ["imagetransforms"]
+source = ["dgimage"]
 
 [tool.coverage.report]
 fail_under = 95
@@ -75,5 +75,5 @@ select = ["F", "B", "E501", "SIM", "RUF012", "PLW2901", "UP037", "PERF",
              "RUF012", "PLW2901", "UP037", "PERF", "PIE"]
 
 [tool.pyright]
-include = ["imagetransforms"]
+include = ["dgimage"]
 typeCheckingMode = "standard"

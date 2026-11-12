@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from imagetransforms import CircleTransform, circletransform
+from dgimage import CircleTransform, circletransform
 
 
 def rings(shape=(96, 128), center=(40, 70), k=0.8):

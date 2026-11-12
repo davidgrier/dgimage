@@ -1,4 +1,4 @@
-# Contributing to imagetransforms
+# Contributing to dgimage
 
 ## What belongs here
 
@@ -16,8 +16,8 @@ If you are not sure whether an idea fits, open an issue first.
 ## Development environment
 
 ```bash
-git clone https://github.com/davidgrier/imagetransforms.git
-cd imagetransforms
+git clone https://github.com/davidgrier/dgimage.git
+cd dgimage
 pip install -e ".[dev]"
 python -m pytest          # tests and doctests
 ruff check .

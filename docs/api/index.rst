@@ -1,17 +1,17 @@
 API reference
 =============
 
-.. automodule:: imagetransforms
+.. automodule:: dgimage
    :no-members:
 
 circletransform
 ---------------
 
-.. automodule:: imagetransforms.circletransform
+.. automodule:: dgimage.circletransform
    :members: circletransform, CircleTransform
 
 azimuthal
 ---------
 
-.. automodule:: imagetransforms.azimuthal
+.. automodule:: dgimage.azimuthal
    :members: avg, std, med, mad, azimuthaloperator
