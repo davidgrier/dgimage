@@ -25,7 +25,7 @@ STYLE = dict(cmap='gray', vmin=0.4, vmax=1.6, interpolation='none')
 # The part of the frame of two spheres that the figure shows (x0, x1, y0, y1),
 # with more room left and below the spheres than above and right of them.
 # The transform is computed on the whole frame, so the crop adds no edges.
-WINDOW = (110, 1170, 540, 1024)
+WINDOW = (0, 1280, 390, 1024)
 
 
 def peaks(heat: np.ndarray, count: int, size: int = 41):
@@ -51,15 +51,13 @@ def transform_figure() -> None:
     '''Two spheres: the hologram, and the map of the centers of rings.'''
     image = example_hologram('image0010.png').data
     heat = circletransform(image)
-    x, y = peaks(heat, 2)
     x0, x1, y0, y1 = WINDOW
-    fig, axes = plt.subplots(ncols=2, figsize=(10, 2.95),
+    fig, axes = plt.subplots(ncols=2, figsize=(10, 3.4),
                              constrained_layout=True)
     axes[0].imshow(image, **STYLE)
     axes[0].set_title('hologram of two spheres')
-    axes[1].imshow(heat, cmap='magma', interpolation='none')
+    axes[1].imshow(heat, cmap='gray', interpolation='none')
     axes[1].set_title('circletransform(hologram)')
-    axes[1].scatter(x, y, s=140, facecolors='none', edgecolors='c', lw=1.5)
     for ax in axes:
         ax.set_xlim(x0, x1)
         ax.set_ylim(y1, y0)
@@ -67,8 +65,7 @@ def transform_figure() -> None:
     fig.savefig(OUT / 'circletransform.png', dpi=110, bbox_inches='tight',
                 pad_inches=0.05)
     plt.close(fig)
-    centers = list(zip(x.tolist(), y.tolist(), strict=True))
-    print('circletransform.png: centers', centers)
+    print('circletransform.png written')
 
 
 def profile_figure() -> None:
