@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: 'If you use this software, please cite it as below.'
+type: software
+title: imagetransforms
+abstract: >-
+  Lightweight image transformations for holography and microscopy,
+  such as the orientation alignment transform, shared by QVideo,
+  pylorenzmie and other projects of the Grier group.
+authors:
+  - family-names: Grier
+    given-names: David G.
+    orcid: https://orcid.org/0000-0002-4382-5139
+    affiliation: New York University
+repository-code: https://github.com/davidgrier/imagetransforms
+license: GPL-3.0-or-later
+url: https://imagetransforms.readthedocs.io
+version: "0.1.0"
+date-released: "2026-11-12"
+keywords:
+  - image processing
+  - feature detection
+  - holography
+  - microscopy
+references:
+  - type: article
+    title: >-
+      Fast feature identification for holographic tracking: the
+      orientation alignment transform
+    authors:
+      - family-names: Krishnatreya
+        given-names: Bhaskar Jyoti
+      - family-names: Grier
+        given-names: David G.
+    journal: Optics Express
+    volume: 22
+    start: 12773
+    end: 12778
+    year: 2014
