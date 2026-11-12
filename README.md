@@ -14,6 +14,8 @@ only `numpy` and `scipy`: no camera, no GUI and no analysis framework, so that
 [pylorenzmie](https://github.com/davidgrier/pylorenzmie) and other programs
 can share one implementation of each algorithm.
 
+<img src="https://raw.githubusercontent.com/davidgrier/dgimage/main/docs/_static/circletransform.png" width="85%" alt="A hologram of two spheres and its orientation alignment transform">
+
 ## Install
 
 ```bash
@@ -39,8 +41,10 @@ about its center is
 ```python
 from dgimage import azimuthal
 
-profile = azimuthal.avg(image, center=(x, y))      # also std, med, mad
+profile = azimuthal.med(image, center=(x, y))      # also avg, std, mad
 ```
+
+<img src="https://raw.githubusercontent.com/davidgrier/dgimage/main/docs/_static/azimuthal.png" width="85%" alt="A hologram of one sphere and its azimuthal median">
 
 ## Contents
 
